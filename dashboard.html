@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GW2 Fractal CM 异变查询（GitHub Pages）</title>
+  <title>GW2 Fractal CM(95-100) 异变查询（GitHub Pages）</title>
   <style>
-    :root{ --bg:#0b1220; --card:#111a2e; --text:#e8eefc; --muted:#9fb0d0; --line:#243251; --accent:#7aa2ff; --bad:#ff6b6b; --good:#39d98a; }
+    :root{ --card:#111a2e; --text:#e8eefc; --muted:#9fb0d0; --line:#243251; --accent:#7aa2ff; --bad:#ff6b6b; --good:#39d98a; }
     body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC","Microsoft YaHei", sans-serif;
       background:linear-gradient(180deg,#071028 0%, #050a14 100%); color:var(--text); }
-    .wrap{ max-width:1100px; margin:0 auto; padding:18px 14px 40px; }
+    .wrap{ max-width:1150px; margin:0 auto; padding:18px 14px 40px; }
     h1{ font-size:20px; margin:8px 0 14px; font-weight:700; }
     .row{ display:grid; grid-template-columns: 1fr; gap:12px; }
-    @media (min-width:900px){ .row{ grid-template-columns: 380px 1fr; } }
+    @media (min-width:940px){ .row{ grid-template-columns: 390px 1fr; } }
     .card{ background:rgba(17,26,46,.92); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,.3); }
-    .sub{ color:var(--muted); font-size:12px; line-height:1.5; }
+    .sub{ color:var(--muted); font-size:12px; line-height:1.55; }
     .status{ font-size:12px; padding:8px 10px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.03); }
     .status.ok{ border-color:rgba(57,217,138,.35); }
     .status.bad{ border-color:rgba(255,107,107,.45); }
@@ -33,18 +33,18 @@
     th,td{ padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
     th{ text-align:left; font-size:12px; color:var(--muted); background:rgba(255,255,255,.03); }
     td{ font-size:13px; }
-    .k{ color:var(--muted); font-size:12px;}
     .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .small{ font-size:12px; color:var(--muted); }
     .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     .hr{ height:1px; background:var(--line); margin:12px 0; }
     a{ color:var(--accent); text-decoration:none; }
     a:hover{ text-decoration:underline; }
+    .lines{ line-height:1.65; }
   </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>GW2 Fractal CM 异变查询（在线表格版）</h1>
+  <h1>GW2 Fractal CM（95–100）异变查询（在线表格版）</h1>
 
   <div class="row">
     <div class="card">
@@ -82,8 +82,8 @@
         <button id="btnBuild">生成/刷新表格</button>
 
         <div class="sub">
-          JSON 读取路径（同目录）：<span class="mono">./instabilities.json</span>、<span class="mono">./fractals.json</span>、<span class="mono">./zh_dict.json</span><br/>
-          如果你能打开这些 URL（例如 <span class="mono">https://你的域名/instabilities.json</span>）但页面仍提示加载失败，基本就是路径不在同级或文件名大小写不一致。
+          本页面只展示 CM 六个碎层（Scale 95–100）：Kinfall、Nightmare、Shattered Observatory、Sunqua Peak、Silent Surf、Lonely Tower。<br/>
+          JSON 读取路径（同目录）：<span class="mono">./instabilities.json</span>、<span class="mono">./fractals.json</span>、<span class="mono">./zh_dict.json</span>
         </div>
       </div>
     </div>
@@ -91,29 +91,34 @@
     <div class="card">
       <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
         <span class="pill">当前日期：<b id="curDateText">—</b></span>
-        <span class="pill">今日异变：<b id="curInstabText">—</b></span>
+        <span class="pill">当日异变：<b id="curInstabText">—</b></span>
       </div>
 
       <div class="hr"></div>
 
       <div id="dayPanel">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:160px;">项目</th>
-              <th>内容</th>
-            </tr>
-          </thead>
-          <tbody id="dayTbody">
-            <tr><td class="k">状态</td><td>等待数据…</td></tr>
-          </tbody>
-        </table>
+        <div class="small" style="margin-bottom:8px;">当日 CM（95–100）异变</div>
+        <div style="overflow:auto; border-radius:12px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:70px;">Scale</th>
+                <th style="width:240px;">碎层</th>
+                <th>异变 1</th>
+                <th>异变 2</th>
+              </tr>
+            </thead>
+            <tbody id="cmTbody">
+              <tr><td colspan="4" class="small">等待数据…</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div class="hr"></div>
 
       <div>
-        <div class="k" style="margin-bottom:8px;">未来表格</div>
+        <div class="small" style="margin-bottom:8px;">未来表格（每天的 CM 95–100 异变）</div>
         <div style="overflow:auto; border-radius:12px;">
           <table>
             <thead>
@@ -121,7 +126,7 @@
                 <th style="width:120px;">日期</th>
                 <th style="width:220px;">异变 1</th>
                 <th style="width:220px;">异变 2</th>
-                <th>当日 CM（如可解析）</th>
+                <th>CM 95–100（同一对异变）</th>
               </tr>
             </thead>
             <tbody id="futureTbody">
@@ -134,7 +139,7 @@
       <div class="hr"></div>
 
       <div>
-        <div class="k" style="margin-bottom:8px;">异变反查（未来出现日期）</div>
+        <div class="small" style="margin-bottom:8px;">异变反查（未来出现日期，适用于 CM 95–100）</div>
         <div id="reverseBox" class="small">请选择异变后自动刷新</div>
       </div>
     </div>
@@ -168,38 +173,20 @@
   let instData = null;
   let fracData = null;
   let zh = null;
+  let cmScales = []; // [{scale:95,type:"kinfall", enName:"Kinfall", zhName:"族亲陨落"}...]
 
   // ========= Translation helpers =========
   function zhLookup(section, key){
-    if(!zh) return null;
     const sec = zh?.[section];
     if(!sec) return null;
-
-    // 可能是 { "0":"中文" } 也可能是 { "Adrenaline Rush":"中文" }
     const k1 = String(key);
     return sec[k1] ?? sec[key] ?? null;
   }
 
-  function instabName(idOrName){
-    // id -> zh if exists
-    const z = zhLookup("instabilities", idOrName);
-    if(z) return { zh:z, en: safeText(idOrName) };
-
-    // 如果 instData 里有 names 映射
-    const en = resolveInstabEN(idOrName);
-    const z2 = zhLookup("instabilities", String(idOrName)) ?? zhLookup("instabilities", en);
-    return { zh: z2 ?? "", en: en ?? safeText(idOrName) };
-  }
-
-  // 尝试从 instabilities.json 里拿到 EN 名称（如果有）
   function resolveInstabEN(id){
     if(!instData) return null;
     const sid = String(id);
-
-    // 形态1：instData.names = { "0":"Adrenaline Rush", ... }
     if(instData.names && instData.names[sid]) return instData.names[sid];
-
-    // 形态2：instData.instabilities = [{id:0,name:"..."}, ...]
     const arr = instData.instabilities || instData.list || null;
     if(Array.isArray(arr)){
       const hit = arr.find(x => String(x.id) === sid || String(x.key) === sid);
@@ -208,26 +195,41 @@
     return null;
   }
 
-  function fractalName(idOrName){
-    const z = zhLookup("fractals", idOrName);
-    if(z) return { zh:z, en:safeText(idOrName) };
-    // fallback
-    return { zh:"", en:safeText(idOrName) };
+  function instabName(idOrName){
+    const zDirect = zhLookup("instabilities", idOrName);
+    if(zDirect) return { zh:zDirect, en: safeText(idOrName) };
+
+    const en = resolveInstabEN(idOrName) || safeText(idOrName);
+    const z2 = zhLookup("instabilities", String(idOrName)) ?? zhLookup("instabilities", en);
+    return { zh: z2 ?? "", en };
   }
 
-  // ========= Core: get instabilities for a date =========
+  function prettyInstab(idOrName){
+    const n = instabName(idOrName);
+    return n.zh ? `${n.zh} <span class="small">(${n.en})</span>` : safeText(n.en);
+  }
+
+  function prettyFractal(fr){
+    const en = fr.enName || fr.type || "";
+    const z =
+      fr.zhName ||
+      zhLookup("fractals", fr.type) ||
+      zhLookup("fractals", en) ||
+      zhLookup("fractals", String(fr.scale)) ||
+      "";
+    return z ? `${z} <span class="small">(${en})</span>` : safeText(en);
+  }
+
+  // ========= Instabilities for a date =========
   function getInstabsForDate(iso){
     if(!instData) return null;
 
-    // 形态A：按日期直接映射 { "2025-12-28":[0,9], ... }
-    if(typeof instData === "object" && instData[iso] && Array.isArray(instData[iso])){
-      return instData[iso];
-    }
+    // A) direct by date
+    if(typeof instData === "object" && instData[iso] && Array.isArray(instData[iso])) return instData[iso];
     if(instData.byDate && instData.byDate[iso]) return instData.byDate[iso];
     if(instData.dates && instData.dates[iso]) return instData.dates[iso];
 
-    // 形态B：rotation + startDate
-    // rotation: [ [id1,id2], [id1,id2], ... ] 长度通常 15
+    // B) rotation + startDate
     const rotation = instData.rotation || instData.schedule || instData.days || null;
     const start = instData.startDate || instData.start_date || instData.rotationStart || instData.base_date || null;
 
@@ -238,48 +240,33 @@
       const len = rotation.length;
       const idx = ((diff % len) + len) % len;
       const val = rotation[idx];
-      // val 可能是 [a,b] 或 {instabilities:[a,b]}
       if(Array.isArray(val)) return val;
       if(val && Array.isArray(val.instabilities)) return val.instabilities;
       if(val && Array.isArray(val.ids)) return val.ids;
     }
-
     return null;
   }
 
-  // ========= Core: get CM fractals for a date =========
-  function getCMForDate(iso){
-    if(!fracData) return [];
+  // ========= CM list: scales 95-100 =========
+  function buildCMList(){
+    cmScales = [];
+    const scales = fracData?.scales;
+    const details = fracData?.fractal_details;
+    if(!Array.isArray(scales)) return;
 
-    // 形态A：按日期映射
-    if(fracData.byDate && fracData.byDate[iso]){
-      return fracData.byDate[iso].cm || fracData.byDate[iso].CM || fracData.byDate[iso] || [];
-    }
-    if(fracData[iso]){
-      const v = fracData[iso];
-      if(Array.isArray(v)) return v;
-      if(v && Array.isArray(v.cm)) return v.cm;
-    }
+    const hits = scales
+      .filter(x => typeof x?.scale === "number" && x.scale >= 95 && x.scale <= 100)
+      .sort((a,b)=>a.scale-b.scale);
 
-    // 形态B：fracData 里有 cmList（所有 CM 名称/ID），但不按日轮换
-    const allCM =
-      fracData.cmList ||
-      fracData.cm ||
-      fracData.CM ||
-      (Array.isArray(fracData) ? fracData.filter(x => x.cm || x.is_cm || x.type==="cm") : null);
-
-    if(Array.isArray(allCM)){
-      // 如果是对象数组，提取 name/id
-      if(allCM.length && typeof allCM[0] === "object"){
-        return allCM.map(x => x.name ?? x.id ?? x.key ?? JSON.stringify(x));
-      }
-      return allCM;
-    }
-
-    return [];
+    hits.forEach(x => {
+      const type = x.type;
+      const enName = details?.[type]?.name?.en || type || "";
+      const zhName = zhLookup("fractals", type) || zhLookup("fractals", enName) || "";
+      cmScales.push({ scale:x.scale, type, enName, zhName });
+    });
   }
 
-  // ========= UI render =========
+  // ========= UI =========
   function setStatus(ok, msg){
     const el = document.getElementById("status");
     el.className = "status " + (ok ? "ok" : "bad");
@@ -290,15 +277,13 @@
     document.getElementById("curDateText").textContent = iso;
 
     const ids = getInstabsForDate(iso);
-    const cm = getCMForDate(iso);
+    const cmTbody = document.getElementById("cmTbody");
+    cmTbody.innerHTML = "";
 
-    const tbody = document.getElementById("dayTbody");
-    tbody.innerHTML = "";
-
-    if(!ids){
+    if(!ids || ids.length < 2){
       document.getElementById("curInstabText").textContent = "—";
-      tbody.innerHTML = `
-        <tr><td class="k">错误</td><td style="color:var(--bad);">
+      cmTbody.innerHTML = `
+        <tr><td colspan="4" style="color:var(--bad);">
           解析不到该日期的异变。请检查 instabilities.json 的结构是否为：<br/>
           ① 直接按日期映射：<span class="mono">{"YYYY-MM-DD":[id1,id2],...}</span><br/>
           或 ② 有 <span class="mono">startDate</span> + <span class="mono">rotation</span>（数组轮换）
@@ -309,21 +294,26 @@
 
     const n1 = instabName(ids[0]);
     const n2 = instabName(ids[1]);
-    const line = `${n1.zh || n1.en} / ${n2.zh || n2.en}`;
-    document.getElementById("curInstabText").textContent = line;
+    document.getElementById("curInstabText").textContent = `${n1.zh || n1.en} / ${n2.zh || n2.en}`;
 
-    const cmText = cm.length
-      ? cm.map(x => {
-          const t = fractalName(x);
-          return t.zh ? `${t.zh} <span class="small">(${t.en})</span>` : safeText(x);
-        }).join("<br/>")
-      : `<span class="small">fractals.json 未解析到“按日 CM 列表”，仅能显示异变（这不影响你查异变）。</span>`;
+    const cell1 = prettyInstab(ids[0]);
+    const cell2 = prettyInstab(ids[1]);
 
-    tbody.innerHTML = `
-      <tr><td class="k">异变 1</td><td>${(n1.zh ? `${n1.zh} <span class="small">(${n1.en})</span>` : safeText(n1.en))}</td></tr>
-      <tr><td class="k">异变 2</td><td>${(n2.zh ? `${n2.zh} <span class="small">(${n2.en})</span>` : safeText(n2.en))}</td></tr>
-      <tr><td class="k">当日 CM</td><td>${cmText}</td></tr>
-    `;
+    if(!cmScales.length){
+      cmTbody.innerHTML = `<tr><td colspan="4" style="color:var(--bad);">fractals.json 未解析到 Scale 95–100，请确认文件内容。</td></tr>`;
+      return;
+    }
+
+    cmScales.forEach(fr => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="mono">${fr.scale}</td>
+        <td>${prettyFractal(fr)}</td>
+        <td>${cell1}</td>
+        <td>${cell2}</td>
+      `;
+      cmTbody.appendChild(tr);
+    });
   }
 
   function renderFuture(startIso, days){
@@ -334,28 +324,27 @@
     for(let i=0;i<days;i++){
       const d = addDays(start, i);
       const iso = toISODate(d);
-      const ids = getInstabsForDate(iso) || [];
-      const cm = getCMForDate(iso);
+      const ids = getInstabsForDate(iso);
 
-      const n1 = ids.length ? instabName(ids[0]) : {zh:"",en:"—"};
-      const n2 = ids.length ? instabName(ids[1]) : {zh:"",en:"—"};
-
-      const cmCell = cm.length
-        ? cm.map(x => {
-            const t = fractalName(x);
-            return t.zh ? `${t.zh}` : safeText(x);
-          }).join(", ")
-        : "—";
+      const n1 = (ids && ids.length>=2) ? instabName(ids[0]) : {zh:"",en:"—"};
+      const n2 = (ids && ids.length>=2) ? instabName(ids[1]) : {zh:"",en:"—"};
 
       const c1 = n1.zh ? `${n1.zh} (${n1.en})` : safeText(n1.en);
       const c2 = n2.zh ? `${n2.zh} (${n2.en})` : safeText(n2.en);
+
+      const list = cmScales.map(fr=>{
+        const z = fr.zhName || "";
+        const en = fr.enName || fr.type || "";
+        const name = z ? `${fr.scale} ${z} (${en})` : `${fr.scale} ${en}`;
+        return `${name}：${c1} / ${c2}`;
+      }).join("<br/>");
 
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td class="mono">${iso}</td>
         <td>${safeText(c1)}</td>
         <td>${safeText(c2)}</td>
-        <td>${safeText(cmCell)}</td>
+        <td class="lines">${list}</td>
       `;
       tbody.appendChild(tr);
     }
@@ -365,20 +354,17 @@
     const sel = document.getElementById("instabSelect");
     sel.innerHTML = "";
 
-    // 优先从 zh_dict.json 取 instabilities 的 key 列表（最完整）
     const map = zh?.instabilities;
     const keys = map ? Object.keys(map) : [];
 
     let options = [];
     if(keys.length){
-      // key 可能是 "0" 也可能是英文名；都支持
       options = keys.map(k => {
         const z = map[k];
         const en = resolveInstabEN(k) || (isNaN(Number(k)) ? k : `ID ${k}`);
         return { key:k, label: z ? `${z} (${en})` : safeText(en) };
       });
     }else{
-      // 兜底：从 instData.rotation 里扫描
       const rot = instData?.rotation || instData?.schedule || null;
       const s = new Set();
       if(Array.isArray(rot)){
@@ -435,7 +421,7 @@
 
     document.getElementById("reverseBox").innerHTML = hits.length
       ? `<div class="pill" style="margin-bottom:8px;">目标异变：<b>${title}</b></div>
-         <div class="small">未来 ${days} 天出现 ${hits.length} 次：</div>
+         <div class="small">未来 ${days} 天出现 ${hits.length} 次（这些日期的 CM 95–100 都是该异变组合）：</div>
          <div class="mono" style="margin-top:6px; line-height:1.8;">${hits.join("<br/>")}</div>`
       : `<div class="pill">目标异变：<b>${title}</b></div>
          <div class="small" style="margin-top:8px;">未来 ${days} 天内未出现。</div>`;
@@ -444,11 +430,9 @@
   // ========= Boot =========
   (async function init(){
     try{
-      // 默认日期=今天
       const today = new Date();
       document.getElementById("dateInput").value = toISODate(today);
 
-      // 同目录读取
       const base = new URL('.', location.href);
       const instUrl = new URL('instabilities.json', base).toString();
       const fracUrl = new URL('fractals.json', base).toString();
@@ -460,20 +444,23 @@
         fetchJson(zhUrl),
       ]);
 
+      buildCMList();
+
       setStatus(true,
         `✅ JSON 已加载：` +
         ` <a href="${instUrl}" target="_blank">instabilities.json</a> /` +
         ` <a href="${fracUrl}" target="_blank">fractals.json</a> /` +
-        ` <a href="${zhUrl}" target="_blank">zh_dict.json</a>`
+        ` <a href="${zhUrl}" target="_blank">zh_dict.json</a><br/>` +
+        `<span class="small">已从 fractals.json 自动锁定 Scale 95–100（CM 六个碎层）</span>`
       );
 
       buildInstabDropdown();
+
       const iso = document.getElementById("dateInput").value;
       renderDay(iso);
       renderFuture(iso, Number(document.getElementById("rangeDays").value || 30));
       renderReverse();
 
-      // events
       document.getElementById("btnBuild").onclick = () => {
         const iso2 = document.getElementById("dateInput").value;
         renderDay(iso2);
@@ -518,7 +505,6 @@
         `❌ 加载失败：${safeText(e.message)}<br/>
          <span class="small">请确认三个 JSON 与本页面同级，并且能直接用浏览器打开。</span>`
       );
-      renderDay(toISODate(new Date()));
     }
   })();
 </script>

@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GW2 Fractal CM 异变查询（GitHub Pages）</title>
+  <style>
+    :root{ --bg:#0b1220; --card:#111a2e; --text:#e8eefc; --muted:#9fb0d0; --line:#243251; --accent:#7aa2ff; --bad:#ff6b6b; --good:#39d98a; }
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC","Microsoft YaHei", sans-serif;
+      background:linear-gradient(180deg,#071028 0%, #050a14 100%); color:var(--text); }
+    .wrap{ max-width:1100px; margin:0 auto; padding:18px 14px 40px; }
+    h1{ font-size:20px; margin:8px 0 14px; font-weight:700; }
+    .row{ display:grid; grid-template-columns: 1fr; gap:12px; }
+    @media (min-width:900px){ .row{ grid-template-columns: 380px 1fr; } }
+    .card{ background:rgba(17,26,46,.92); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:0 8px 24px rgba(0,0,0,.3); }
+    .sub{ color:var(--muted); font-size:12px; line-height:1.5; }
+    .status{ font-size:12px; padding:8px 10px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.03); }
+    .status.ok{ border-color:rgba(57,217,138,.35); }
+    .status.bad{ border-color:rgba(255,107,107,.45); }
+    .controls{ display:grid; gap:10px; }
+    label{ font-size:12px; color:var(--muted); display:block; margin-bottom:4px;}
+    input, select, button{
+      width:100%; padding:10px 10px; border-radius:10px; border:1px solid var(--line);
+      background:rgba(255,255,255,.03); color:var(--text); outline:none;
+    }
+    button{ cursor:pointer; background:rgba(122,162,255,.14); border-color:rgba(122,162,255,.35); }
+    button:hover{ background:rgba(122,162,255,.22); }
+    .btns{ display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; }
+    .pill{ display:inline-flex; gap:8px; align-items:center; font-size:12px; padding:6px 10px; border-radius:999px;
+      border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--muted); }
+    .pill b{ color:var(--text); font-weight:650; }
+    table{ width:100%; border-collapse:collapse; overflow:hidden; border-radius:12px; border:1px solid var(--line); }
+    th,td{ padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+    th{ text-align:left; font-size:12px; color:var(--muted); background:rgba(255,255,255,.03); }
+    td{ font-size:13px; }
+    .k{ color:var(--muted); font-size:12px;}
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .small{ font-size:12px; color:var(--muted); }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .hr{ height:1px; background:var(--line); margin:12px 0; }
+    a{ color:var(--accent); text-decoration:none; }
+    a:hover{ text-decoration:underline; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GW2 Fractal CM 异变查询（在线表格版）</h1>
+
+  <div class="row">
+    <div class="card">
+      <div id="status" class="status">正在加载 JSON…</div>
+      <div class="hr"></div>
+
+      <div class="controls">
+        <div>
+          <label>选择日期</label>
+          <input id="dateInput" type="date" />
+          <div class="btns" style="margin-top:8px;">
+            <button id="btnToday">今天</button>
+            <button id="btnTomorrow">明天</button>
+            <button id="btnPlus7">+7天</button>
+            <button id="btnPlus30">+30天</button>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div>
+            <label>未来天数（表格）</label>
+            <input id="rangeDays" type="number" min="1" max="180" value="30" />
+          </div>
+          <div>
+            <label>反查窗口（天）</label>
+            <input id="reverseDays" type="number" min="1" max="365" value="90" />
+          </div>
+        </div>
+
+        <div>
+          <label>按异变反查（未来）</label>
+          <select id="instabSelect"></select>
+        </div>
+
+        <button id="btnBuild">生成/刷新表格</button>
+
+        <div class="sub">
+          JSON 读取路径（同目录）：<span class="mono">./instabilities.json</span>、<span class="mono">./fractals.json</span>、<span class="mono">./zh_dict.json</span><br/>
+          如果你能打开这些 URL（例如 <span class="mono">https://你的域名/instabilities.json</span>）但页面仍提示加载失败，基本就是路径不在同级或文件名大小写不一致。
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <span class="pill">当前日期：<b id="curDateText">—</b></span>
+        <span class="pill">今日异变：<b id="curInstabText">—</b></span>
+      </div>
+
+      <div class="hr"></div>
+
+      <div id="dayPanel">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:160px;">项目</th>
+              <th>内容</th>
+            </tr>
+          </thead>
+          <tbody id="dayTbody">
+            <tr><td class="k">状态</td><td>等待数据…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="hr"></div>
+
+      <div>
+        <div class="k" style="margin-bottom:8px;">未来表格</div>
+        <div style="overflow:auto; border-radius:12px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:120px;">日期</th>
+                <th style="width:220px;">异变 1</th>
+                <th style="width:220px;">异变 2</th>
+                <th>当日 CM（如可解析）</th>
+              </tr>
+            </thead>
+            <tbody id="futureTbody">
+              <tr><td colspan="4" class="small">点击“生成/刷新表格”</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div>
+        <div class="k" style="margin-bottom:8px;">异变反查（未来出现日期）</div>
+        <div id="reverseBox" class="small">请选择异变后自动刷新</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ========= Utils =========
+  const pad2 = n => String(n).padStart(2,'0');
+  const toISODate = (d) => `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+  const parseISODate = (s) => {
+    const [y,m,dd] = s.split('-').map(Number);
+    return new Date(y, (m||1)-1, dd||1);
+  };
+  const addDays = (d, n) => {
+    const x = new Date(d.getTime());
+    x.setDate(x.getDate() + n);
+    return x;
+  };
+  const safeText = (v) => (v === undefined || v === null) ? '' : String(v);
+
+  async function fetchJson(url){
+    const r = await fetch(url, { cache: "no-store" });
+    if(!r.ok){
+      throw new Error(`HTTP ${r.status} ${r.statusText} - ${url}`);
+    }
+    return await r.json();
+  }
+
+  // ========= Data holders =========
+  let instData = null;
+  let fracData = null;
+  let zh = null;
+
+  // ========= Translation helpers =========
+  function zhLookup(section, key){
+    if(!zh) return null;
+    const sec = zh?.[section];
+    if(!sec) return null;
+
+    // 可能是 { "0":"中文" } 也可能是 { "Adrenaline Rush":"中文" }
+    const k1 = String(key);
+    return sec[k1] ?? sec[key] ?? null;
+  }
+
+  function instabName(idOrName){
+    // id -> zh if exists
+    const z = zhLookup("instabilities", idOrName);
+    if(z) return { zh:z, en: safeText(idOrName) };
+
+    // 如果 instData 里有 names 映射
+    const en = resolveInstabEN(idOrName);
+    const z2 = zhLookup("instabilities", String(idOrName)) ?? zhLookup("instabilities", en);
+    return { zh: z2 ?? "", en: en ?? safeText(idOrName) };
+  }
+
+  // 尝试从 instabilities.json 里拿到 EN 名称（如果有）
+  function resolveInstabEN(id){
+    if(!instData) return null;
+    const sid = String(id);
+
+    // 形态1：instData.names = { "0":"Adrenaline Rush", ... }
+    if(instData.names && instData.names[sid]) return instData.names[sid];
+
+    // 形态2：instData.instabilities = [{id:0,name:"..."}, ...]
+    const arr = instData.instabilities || instData.list || null;
+    if(Array.isArray(arr)){
+      const hit = arr.find(x => String(x.id) === sid || String(x.key) === sid);
+      if(hit) return hit.name || hit.en || hit.title || null;
+    }
+    return null;
+  }
+
+  function fractalName(idOrName){
+    const z = zhLookup("fractals", idOrName);
+    if(z) return { zh:z, en:safeText(idOrName) };
+    // fallback
+    return { zh:"", en:safeText(idOrName) };
+  }
+
+  // ========= Core: get instabilities for a date =========
+  function getInstabsForDate(iso){
+    if(!instData) return null;
+
+    // 形态A：按日期直接映射 { "2025-12-28":[0,9], ... }
+    if(typeof instData === "object" && instData[iso] && Array.isArray(instData[iso])){
+      return instData[iso];
+    }
+    if(instData.byDate && instData.byDate[iso]) return instData.byDate[iso];
+    if(instData.dates && instData.dates[iso]) return instData.dates[iso];
+
+    // 形态B：rotation + startDate
+    // rotation: [ [id1,id2], [id1,id2], ... ] 长度通常 15
+    const rotation = instData.rotation || instData.schedule || instData.days || null;
+    const start = instData.startDate || instData.start_date || instData.rotationStart || instData.base_date || null;
+
+    if(Array.isArray(rotation) && start){
+      const d = parseISODate(iso);
+      const base = parseISODate(String(start).slice(0,10));
+      const diff = Math.floor((d - base) / 86400000);
+      const len = rotation.length;
+      const idx = ((diff % len) + len) % len;
+      const val = rotation[idx];
+      // val 可能是 [a,b] 或 {instabilities:[a,b]}
+      if(Array.isArray(val)) return val;
+      if(val && Array.isArray(val.instabilities)) return val.instabilities;
+      if(val && Array.isArray(val.ids)) return val.ids;
+    }
+
+    return null;
+  }
+
+  // ========= Core: get CM fractals for a date =========
+  function getCMForDate(iso){
+    if(!fracData) return [];
+
+    // 形态A：按日期映射
+    if(fracData.byDate && fracData.byDate[iso]){
+      return fracData.byDate[iso].cm || fracData.byDate[iso].CM || fracData.byDate[iso] || [];
+    }
+    if(fracData[iso]){
+      const v = fracData[iso];
+      if(Array.isArray(v)) return v;
+      if(v && Array.isArray(v.cm)) return v.cm;
+    }
+
+    // 形态B：fracData 里有 cmList（所有 CM 名称/ID），但不按日轮换
+    const allCM =
+      fracData.cmList ||
+      fracData.cm ||
+      fracData.CM ||
+      (Array.isArray(fracData) ? fracData.filter(x => x.cm || x.is_cm || x.type==="cm") : null);
+
+    if(Array.isArray(allCM)){
+      // 如果是对象数组，提取 name/id
+      if(allCM.length && typeof allCM[0] === "object"){
+        return allCM.map(x => x.name ?? x.id ?? x.key ?? JSON.stringify(x));
+      }
+      return allCM;
+    }
+
+    return [];
+  }
+
+  // ========= UI render =========
+  function setStatus(ok, msg){
+    const el = document.getElementById("status");
+    el.className = "status " + (ok ? "ok" : "bad");
+    el.innerHTML = msg;
+  }
+
+  function renderDay(iso){
+    document.getElementById("curDateText").textContent = iso;
+
+    const ids = getInstabsForDate(iso);
+    const cm = getCMForDate(iso);
+
+    const tbody = document.getElementById("dayTbody");
+    tbody.innerHTML = "";
+
+    if(!ids){
+      document.getElementById("curInstabText").textContent = "—";
+      tbody.innerHTML = `
+        <tr><td class="k">错误</td><td style="color:var(--bad);">
+          解析不到该日期的异变。请检查 instabilities.json 的结构是否为：<br/>
+          ① 直接按日期映射：<span class="mono">{"YYYY-MM-DD":[id1,id2],...}</span><br/>
+          或 ② 有 <span class="mono">startDate</span> + <span class="mono">rotation</span>（数组轮换）
+        </td></tr>
+      `;
+      return;
+    }
+
+    const n1 = instabName(ids[0]);
+    const n2 = instabName(ids[1]);
+    const line = `${n1.zh || n1.en} / ${n2.zh || n2.en}`;
+    document.getElementById("curInstabText").textContent = line;
+
+    const cmText = cm.length
+      ? cm.map(x => {
+          const t = fractalName(x);
+          return t.zh ? `${t.zh} <span class="small">(${t.en})</span>` : safeText(x);
+        }).join("<br/>")
+      : `<span class="small">fractals.json 未解析到“按日 CM 列表”，仅能显示异变（这不影响你查异变）。</span>`;
+
+    tbody.innerHTML = `
+      <tr><td class="k">异变 1</td><td>${(n1.zh ? `${n1.zh} <span class="small">(${n1.en})</span>` : safeText(n1.en))}</td></tr>
+      <tr><td class="k">异变 2</td><td>${(n2.zh ? `${n2.zh} <span class="small">(${n2.en})</span>` : safeText(n2.en))}</td></tr>
+      <tr><td class="k">当日 CM</td><td>${cmText}</td></tr>
+    `;
+  }
+
+  function renderFuture(startIso, days){
+    const tbody = document.getElementById("futureTbody");
+    tbody.innerHTML = "";
+    const start = parseISODate(startIso);
+
+    for(let i=0;i<days;i++){
+      const d = addDays(start, i);
+      const iso = toISODate(d);
+      const ids = getInstabsForDate(iso) || [];
+      const cm = getCMForDate(iso);
+
+      const n1 = ids.length ? instabName(ids[0]) : {zh:"",en:"—"};
+      const n2 = ids.length ? instabName(ids[1]) : {zh:"",en:"—"};
+
+      const cmCell = cm.length
+        ? cm.map(x => {
+            const t = fractalName(x);
+            return t.zh ? `${t.zh}` : safeText(x);
+          }).join(", ")
+        : "—";
+
+      const c1 = n1.zh ? `${n1.zh} (${n1.en})` : safeText(n1.en);
+      const c2 = n2.zh ? `${n2.zh} (${n2.en})` : safeText(n2.en);
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="mono">${iso}</td>
+        <td>${safeText(c1)}</td>
+        <td>${safeText(c2)}</td>
+        <td>${safeText(cmCell)}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+  }
+
+  function buildInstabDropdown(){
+    const sel = document.getElementById("instabSelect");
+    sel.innerHTML = "";
+
+    // 优先从 zh_dict.json 取 instabilities 的 key 列表（最完整）
+    const map = zh?.instabilities;
+    const keys = map ? Object.keys(map) : [];
+
+    let options = [];
+    if(keys.length){
+      // key 可能是 "0" 也可能是英文名；都支持
+      options = keys.map(k => {
+        const z = map[k];
+        const en = resolveInstabEN(k) || (isNaN(Number(k)) ? k : `ID ${k}`);
+        return { key:k, label: z ? `${z} (${en})` : safeText(en) };
+      });
+    }else{
+      // 兜底：从 instData.rotation 里扫描
+      const rot = instData?.rotation || instData?.schedule || null;
+      const s = new Set();
+      if(Array.isArray(rot)){
+        rot.forEach(v => {
+          const arr = Array.isArray(v) ? v : (v?.instabilities || v?.ids || []);
+          (arr||[]).forEach(x => s.add(String(x)));
+        });
+      }
+      options = Array.from(s).sort((a,b)=>Number(a)-Number(b)).map(k=>{
+        const n = instabName(k);
+        const label = n.zh ? `${n.zh} (${n.en})` : safeText(n.en);
+        return { key:k, label };
+      });
+    }
+
+    if(!options.length){
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "（未找到异变字典）";
+      sel.appendChild(opt);
+      return;
+    }
+
+    options.forEach(o=>{
+      const opt = document.createElement("option");
+      opt.value = o.key;
+      opt.textContent = o.label;
+      sel.appendChild(opt);
+    });
+  }
+
+  function renderReverse(){
+    const selKey = document.getElementById("instabSelect").value;
+    const days = Math.max(1, Math.min(365, Number(document.getElementById("reverseDays").value || 90)));
+    const startIso = document.getElementById("dateInput").value || toISODate(new Date());
+    const start = parseISODate(startIso);
+
+    if(!selKey){
+      document.getElementById("reverseBox").textContent = "请选择异变后自动刷新";
+      return;
+    }
+
+    const target = String(selKey);
+    const hits = [];
+    for(let i=0;i<days;i++){
+      const iso = toISODate(addDays(start,i));
+      const ids = getInstabsForDate(iso);
+      if(!ids) continue;
+      if(ids.map(x=>String(x)).includes(target)) hits.push(iso);
+    }
+
+    const n = instabName(target);
+    const title = n.zh ? `${n.zh} (${n.en})` : safeText(n.en);
+
+    document.getElementById("reverseBox").innerHTML = hits.length
+      ? `<div class="pill" style="margin-bottom:8px;">目标异变：<b>${title}</b></div>
+         <div class="small">未来 ${days} 天出现 ${hits.length} 次：</div>
+         <div class="mono" style="margin-top:6px; line-height:1.8;">${hits.join("<br/>")}</div>`
+      : `<div class="pill">目标异变：<b>${title}</b></div>
+         <div class="small" style="margin-top:8px;">未来 ${days} 天内未出现。</div>`;
+  }
+
+  // ========= Boot =========
+  (async function init(){
+    try{
+      // 默认日期=今天
+      const today = new Date();
+      document.getElementById("dateInput").value = toISODate(today);
+
+      // 同目录读取
+      const base = new URL('.', location.href);
+      const instUrl = new URL('instabilities.json', base).toString();
+      const fracUrl = new URL('fractals.json', base).toString();
+      const zhUrl   = new URL('zh_dict.json', base).toString();
+
+      [instData, fracData, zh] = await Promise.all([
+        fetchJson(instUrl),
+        fetchJson(fracUrl),
+        fetchJson(zhUrl),
+      ]);
+
+      setStatus(true,
+        `✅ JSON 已加载：` +
+        ` <a href="${instUrl}" target="_blank">instabilities.json</a> /` +
+        ` <a href="${fracUrl}" target="_blank">fractals.json</a> /` +
+        ` <a href="${zhUrl}" target="_blank">zh_dict.json</a>`
+      );
+
+      buildInstabDropdown();
+      const iso = document.getElementById("dateInput").value;
+      renderDay(iso);
+      renderFuture(iso, Number(document.getElementById("rangeDays").value || 30));
+      renderReverse();
+
+      // events
+      document.getElementById("btnBuild").onclick = () => {
+        const iso2 = document.getElementById("dateInput").value;
+        renderDay(iso2);
+        renderFuture(iso2, Number(document.getElementById("rangeDays").value || 30));
+        renderReverse();
+      };
+      document.getElementById("dateInput").onchange = () => {
+        const iso2 = document.getElementById("dateInput").value;
+        renderDay(iso2);
+        renderFuture(iso2, Number(document.getElementById("rangeDays").value || 30));
+        renderReverse();
+      };
+      document.getElementById("rangeDays").onchange = () => {
+        const iso2 = document.getElementById("dateInput").value;
+        renderFuture(iso2, Number(document.getElementById("rangeDays").value || 30));
+      };
+      document.getElementById("reverseDays").onchange = () => renderReverse();
+      document.getElementById("instabSelect").onchange = () => renderReverse();
+
+      document.getElementById("btnToday").onclick = () => {
+        document.getElementById("dateInput").value = toISODate(new Date());
+        document.getElementById("btnBuild").click();
+      };
+      document.getElementById("btnTomorrow").onclick = () => {
+        document.getElementById("dateInput").value = toISODate(addDays(new Date(),1));
+        document.getElementById("btnBuild").click();
+      };
+      document.getElementById("btnPlus7").onclick = () => {
+        const d = parseISODate(document.getElementById("dateInput").value);
+        document.getElementById("dateInput").value = toISODate(addDays(d,7));
+        document.getElementById("btnBuild").click();
+      };
+      document.getElementById("btnPlus30").onclick = () => {
+        const d = parseISODate(document.getElementById("dateInput").value);
+        document.getElementById("dateInput").value = toISODate(addDays(d,30));
+        document.getElementById("btnBuild").click();
+      };
+
+    }catch(e){
+      console.error(e);
+      setStatus(false,
+        `❌ 加载失败：${safeText(e.message)}<br/>
+         <span class="small">请确认三个 JSON 与本页面同级，并且能直接用浏览器打开。</span>`
+      );
+      renderDay(toISODate(new Date()));
+    }
+  })();
+</script>
+</body>
+</html>

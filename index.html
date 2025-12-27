@@ -99,46 +99,6 @@
 </div>
 
 <script>
-  
-  // ===== 中文字典（i18n）加载 =====
-  let I18N = { fractals: {}, instabilities: {} };
-  
-  async function loadI18n() {
-    try {
-      // 加个时间戳避免 GitHub Pages 缓存导致你改了文件却没更新
-      const res = await fetch(`./i18n_zh.json?v=${Date.now()}`);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      I18N = await res.json();
-      console.log("[i18n] loaded", I18N);
-    } catch (e) {
-      console.warn("[i18n] load failed, fallback to EN only:", e);
-      I18N = { fractals: {}, instabilities: {} };
-    }
-  }
-  
-  // 拼接显示：英文（中文）
-  function withZh(en, zh) {
-    return zh ? `${en}（${zh}）` : en;
-  }
-
-  // i18n 兼容：支持 key 用英文名 / 小写slug / 下划线slug
-  function getFractalZhByKey(key) {
-    if (!key) return null;
-    const k1 = String(key);
-    const k2 = k1.toLowerCase();
-    const k3 = k2.replace(/\s+/g, "_"); // "Shattered Observatory" -> "shattered_observatory"
-    return (I18N.fractals && (I18N.fractals[k1] || I18N.fractals[k2] || I18N.fractals[k3])) || null;
-  }
-  
-  // i18n 兼容：支持你之前那种 instabilities 里又套一层 instabilities 的写法
-  function getInstZhById(id) {
-    const k = String(id);
-    return (I18N.instabilities?.[k]?.zh)
-        || (I18N.instabilities?.instabilities?.[k]?.zh)
-        || null;
-  }
-
-
   // -------------------------
   // Helpers
   // -------------------------
@@ -239,8 +199,7 @@
       const triple = byScale ? byScale[idx] : null;
 
       const name = getFractalNameByScale(scale);
-      const zhFractal = getFractalZhByKey(name);
-      const title = name ? withZh(name, zhFractal) : `Scale ${scale}`;
+      const title = name ? `${name}` : `Scale ${scale}`;
 
       const card = document.createElement("div");
       card.className = "card";
@@ -259,9 +218,8 @@
       } else {
         const ol = document.createElement("ol");
         triple.forEach(id => {
-          const enInst = getInstabilityName(id);
-          const zhInst = getInstZhById(id);
-          li.textContent = `${withZh(enInst, zhInst)} (id=${id})`;
+          const li = document.createElement("li");
+          li.textContent = `${getInstabilityName(id)}  (id=${id})`;
           ol.appendChild(li);
         });
         card.appendChild(ol);
@@ -279,9 +237,7 @@
   // -------------------------
   // Wire up UI
   // -------------------------
-  (async function init() {
-    await loadI18n();
-    
+  (function init() {
     // default date = today
     const now = new Date();
     $("datePick").value = fmtDate(now);
